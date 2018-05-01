@@ -12,17 +12,46 @@ package br.edu.ufabc.sucupirafilter.model;
 
 import java.io.Serializable;
 
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.persistence.Id;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.ManyToOne;
+import javax.persistence.JoinColumn;
+import javax.persistence.Column;
+
+@Entity
+@Table(name = "curso")
 public class Curso implements Serializable {
     
     public static final long serialVersionUID = 1L;
     
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
     private Long id;
+    
+    @Column(name = "nome")
     private String nome;
+    
+    @Column(name = "situacao")
     private String situacao;
+    
+    @Column(name = "nivel")
     private String nivel;
+    
+    @Column(name = "nota_curso")
     private String notaCurso;
+    
+    @Column(name = "data_recomendacao")
     private String dataRecomendacao;
+    
+    @Column(name = "data_inicio")
     private String dataInicio;
+    
+    @ManyToOne
+    @JoinColumn(name = "programa_id", referencedColumnName = "id")
     private Programa programa;
     
     public Curso() {
