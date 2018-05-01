@@ -12,12 +12,28 @@ package br.edu.ufabc.sucupirafilter.model;
 
 import java.io.Serializable;
 
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.persistence.Id;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Column;
+
+@Entity
+@Table(name = "area_avaliacao")
 public class AreaAvaliacao implements Serializable {
     
     public static final long serialVersionUID = 1L;
     
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
     private Long id;
+    
+    @Column(name = "nome")
     private String nome;
+    
+    @Column(name = "codigo")
     private String codigo;
     
     public AreaAvaliacao() {
