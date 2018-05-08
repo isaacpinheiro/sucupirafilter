@@ -73,7 +73,7 @@ public class Application {
     }
     
     public static void buscarPorAreaAvaliacao(AreaAvaliacaoRepository aar, AreaConhecimentoRepository acr,
-        InstituicaoRepository ir, ProgramaRepository pr) throws IOException {
+        InstituicaoRepository ir, ProgramaRepository pr, CursoRepository cr) throws IOException {
         
         log.info("Buscando as informações da Área de Avaliação e salvando no Banco de Dados.");
         Properties urlProps = getProps("src/main/resources/url.properties");
@@ -158,7 +158,7 @@ public class Application {
                     aa.setNome(nome);
                     aar.save(aa);
                     log.info(aa.getCodigo() + " " + aa.getNome());
-                    buscarPorAreaConhecimento(aar, acr, ir, pr);
+                    buscarPorAreaConhecimento(aar, acr, ir, pr, cr);
                     break;
                 }
                 
@@ -177,7 +177,7 @@ public class Application {
     }
     
     public static void buscarPorAreaConhecimento(AreaAvaliacaoRepository aar, AreaConhecimentoRepository acr,
-        InstituicaoRepository ir, ProgramaRepository pr) throws IOException {
+        InstituicaoRepository ir, ProgramaRepository pr, CursoRepository cr) throws IOException {
         
         log.info("Buscando as informações da Área de Conhecimento e salvando no Banco de Dados.");
         Properties urlProps = getProps("src/main/resources/url.properties");
@@ -267,7 +267,7 @@ public class Application {
                     acr.save(ac);
                     
                     log.info(ac.getCodigo() + " " + ac.getNome());
-                    buscarPorInstituicao(ac.getCodigo(), acr, ir, pr);
+                    buscarPorInstituicao(ac.getCodigo(), acr, ir, pr, cr);
                 
                 }
                 
@@ -286,7 +286,7 @@ public class Application {
     }
     
     public static void buscarPorInstituicao(String codigo, AreaConhecimentoRepository acr,
-        InstituicaoRepository ir, ProgramaRepository pr) throws IOException {
+        InstituicaoRepository ir, ProgramaRepository pr, CursoRepository cr) throws IOException {
         
         log.info("Buscando as informações da Instituição de Ensino e salvando no Banco de Dados.");
         Properties urlProps = getProps("src/main/resources/url.properties");
@@ -379,7 +379,7 @@ public class Application {
                     i.setNome(nome);
                     ir.save(i);
                     log.info(i.getCodigo() + " " + i.getAcronimo() + " " + i.getNome());
-                    buscarPorPrograma(ac.getCodigo(), i.getCodigo(), acr, ir, pr);
+                    buscarPorPrograma(ac.getCodigo(), i.getCodigo(), acr, ir, pr, cr);
                     
                 }
                 
@@ -398,7 +398,8 @@ public class Application {
     }
     
     public static void buscarPorPrograma(String codigoAreaConhecimento, String codigoInstituicao,
-        AreaConhecimentoRepository acr, InstituicaoRepository ir, ProgramaRepository pr) throws IOException {
+        AreaConhecimentoRepository acr, InstituicaoRepository ir, ProgramaRepository pr,
+        CursoRepository cr) throws IOException {
         
         log.info("Buscando as informações dos Programas de Pós-Graduação e salvando no Banco de Dados.");
         Properties urlProps = getProps("src/main/resources/url.properties");
@@ -501,6 +502,7 @@ public class Application {
                 p.setAreaConhecimento(ac);
                 pr.save(p);
                 log.info(p.getNome() + " " + p.getUf() + " " + p.getCodigo());
+                buscarPorCurso(p.getCodigo(), ir, pr, cr);
                 
             }
             
@@ -516,6 +518,13 @@ public class Application {
         
     }
     
+    public static void buscarPorCurso(String codigo, InstituicaoRepository ir,
+        ProgramaRepository pr, CursoRepository cr) throws IOException {
+        
+        // TODO
+        
+    }
+    
     @Bean
     public CommandLineRunner runner(AreaAvaliacaoRepository aar, AreaConhecimentoRepository acr,
         CursoRepository cr, InstituicaoRepository ir, ProgramaRepository pr) {
@@ -523,7 +532,7 @@ public class Application {
         return (args) -> {
             
             log.info("Sucupira Filter");
-            buscarPorAreaAvaliacao(aar, acr, ir, pr);
+            buscarPorAreaAvaliacao(aar, acr, ir, pr, cr);
             
         };
         
