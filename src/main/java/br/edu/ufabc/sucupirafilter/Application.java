@@ -369,9 +369,9 @@ public class Application {
                     codigoInstituicao = page.split(regexProps.getProperty("regex.instituicao.hrefSplit"))[1];
                     
                     matcher2 = aReplace.matcher(a);
-                    String[] aContent = matcher2.replaceAll("").split("( [(])");
+                    String[] aContent = matcher2.replaceAll("").split(regexProps.getProperty("regex.instituicao.acronimoSplit"));
                     nome = aContent[0];
-                    acronimo = aContent[1].replaceAll("[)]", "");
+                    acronimo = aContent[1].replaceAll(regexProps.getProperty("regex.instituicao.acronimoReplace"), "");
                     
                     Instituicao i = new Instituicao();
                     i.setCodigo(codigoInstituicao);
