@@ -14,5 +14,5 @@ import org.springframework.data.repository.CrudRepository;
 import br.edu.ufabc.sucupirafilter.model.Instituicao;
 
 public interface InstituicaoRepository extends CrudRepository<Instituicao, Long> {
-    
+    Instituicao findByCodigo(String codigo);
 }

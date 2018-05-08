@@ -73,7 +73,7 @@ public class Application {
     }
     
     public static void buscarPorAreaAvaliacao(AreaAvaliacaoRepository aar, AreaConhecimentoRepository acr,
-        InstituicaoRepository ir) throws IOException {
+        InstituicaoRepository ir, ProgramaRepository pr) throws IOException {
         
         log.info("Buscando as informações da Área de Avaliação e salvando no Banco de Dados.");
         Properties urlProps = getProps("src/main/resources/url.properties");
@@ -158,7 +158,7 @@ public class Application {
                     aa.setNome(nome);
                     aar.save(aa);
                     log.info(aa.getCodigo() + " " + aa.getNome());
-                    buscarPorAreaConhecimento(aar, acr, ir);
+                    buscarPorAreaConhecimento(aar, acr, ir, pr);
                     break;
                 }
                 
@@ -177,7 +177,7 @@ public class Application {
     }
     
     public static void buscarPorAreaConhecimento(AreaAvaliacaoRepository aar, AreaConhecimentoRepository acr,
-        InstituicaoRepository ir) throws IOException {
+        InstituicaoRepository ir, ProgramaRepository pr) throws IOException {
         
         log.info("Buscando as informações da Área de Conhecimento e salvando no Banco de Dados.");
         Properties urlProps = getProps("src/main/resources/url.properties");
@@ -267,7 +267,7 @@ public class Application {
                     acr.save(ac);
                     
                     log.info(ac.getCodigo() + " " + ac.getNome());
-                    buscarPorInstituicao(ac.getCodigo(), acr, ir);
+                    buscarPorInstituicao(ac.getCodigo(), acr, ir, pr);
                 
                 }
                 
@@ -286,7 +286,7 @@ public class Application {
     }
     
     public static void buscarPorInstituicao(String codigo, AreaConhecimentoRepository acr,
-        InstituicaoRepository ir) throws IOException {
+        InstituicaoRepository ir, ProgramaRepository pr) throws IOException {
         
         log.info("Buscando as informações da Instituição de Ensino e salvando no Banco de Dados.");
         Properties urlProps = getProps("src/main/resources/url.properties");
@@ -379,8 +379,128 @@ public class Application {
                     i.setNome(nome);
                     ir.save(i);
                     log.info(i.getCodigo() + " " + i.getAcronimo() + " " + i.getNome());
+                    buscarPorPrograma(ac.getCodigo(), i.getCodigo(), acr, ir, pr);
                     
                 }
+                
+            }
+            
+        } catch (MalformedURLException mue) {
+            
+            log.info(mue.getMessage());
+            
+        } catch (Exception e) {
+            
+            log.info(e.getMessage());
+            
+        }
+        
+    }
+    
+    public static void buscarPorPrograma(String codigoAreaConhecimento, String codigoInstituicao,
+        AreaConhecimentoRepository acr, InstituicaoRepository ir, ProgramaRepository pr) throws IOException {
+        
+        log.info("Buscando as informações dos Programas de Pós-Graduação e salvando no Banco de Dados.");
+        Properties urlProps = getProps("src/main/resources/url.properties");
+        Properties regexProps = getProps("src/main/resources/regex.properties");
+        
+        AreaConhecimento ac = acr.findByCodigo(codigoAreaConhecimento);
+        Instituicao i = ir.findByCodigo(codigoInstituicao);
+        String sucupira = urlProps.getProperty("url.sucupira");
+        String programa = urlProps.getProperty("url.programa");
+        String[] aux = programa.split("[*]");
+        programa = aux[0] + ac.getAreaAvaliacao().getCodigo() + aux[1] + ac.getCodigo() + aux[2] + i.getCodigo();
+        
+        try {
+            
+            URL url = new URL(sucupira + programa);
+            String page = getPage(url);
+            
+            Matcher matcher, matcher2;
+            
+            Pattern tab1 = Pattern.compile(regexProps.getProperty("regex.tab1"));
+            Pattern tab2 = Pattern.compile(regexProps.getProperty("regex.tab2"));
+            Pattern newline = Pattern.compile(regexProps.getProperty("regex.newline"));
+            Pattern divResultado = Pattern.compile(regexProps.getProperty("regex.programa.divResultado"));
+            Pattern table = Pattern.compile(regexProps.getProperty("regex.programa.table"));
+            Pattern tbody = Pattern.compile(regexProps.getProperty("regex.programa.tbody"));
+            Pattern tr = Pattern.compile(regexProps.getProperty("regex.programa.tr"));
+            Pattern trReplace = Pattern.compile(regexProps.getProperty("regex.programa.trReplace"));
+            Pattern td = Pattern.compile(regexProps.getProperty("regex.programa.td"));
+            Pattern tdReplace = Pattern.compile(regexProps.getProperty("regex.programa.tdReplace"));
+            Pattern href = Pattern.compile(regexProps.getProperty("regex.programa.href"));
+            Pattern hrefReplace = Pattern.compile(regexProps.getProperty("regex.programa.hrefReplace"));
+            Pattern aReplace = Pattern.compile(regexProps.getProperty("regex.programa.aReplace"));
+            
+            matcher = tab1.matcher(page);
+            page = matcher.replaceAll("");
+            
+            matcher = tab2.matcher(page);
+            page = matcher.replaceAll("<");
+            
+            matcher = newline.matcher(page);
+            page = matcher.replaceAll("");
+            
+            matcher = divResultado.matcher(page);
+            matcher.find();
+            page = matcher.group();
+            
+            matcher = table.matcher(page);
+            matcher.find();
+            page = matcher.group();
+            
+            matcher = tbody.matcher(page);
+            matcher.find();
+            page = matcher.group();
+            
+            matcher = tr.matcher(page);
+            String nome, codigoPrograma, uf;
+            
+            while (matcher.find()) {
+                
+                page = matcher.group();
+                
+                matcher2 = trReplace.matcher(page);
+                page = matcher2.replaceAll("");
+                
+                matcher2 = td.matcher(page);
+                matcher2.find();
+                
+                String tdA = matcher2.group();
+                matcher2.find();
+                matcher2.find();
+                
+                String tdUf = matcher2.group();
+                
+                matcher2 = tdReplace.matcher(tdUf);
+                uf = matcher2.replaceAll("");
+                
+                matcher2 = tdReplace.matcher(tdA);
+                page = matcher2.replaceAll("");
+                
+                matcher2 = href.matcher(page);
+                matcher2.find();
+                page = matcher2.group();
+                
+                matcher2 = hrefReplace.matcher(page);
+                page = matcher2.replaceAll("");
+                
+                codigoPrograma = page.split(regexProps.getProperty("regex.programa.hrefSplit"))[1];
+                
+                matcher2 = tdReplace.matcher(tdA);
+                tdA = matcher2.replaceAll("");
+                
+                matcher2 = aReplace.matcher(tdA);
+                nome = matcher2.replaceAll("");
+                nome = nome.split(regexProps.getProperty("regex.programa.nomeSplit"))[0];
+                
+                Programa p = new Programa();
+                p.setNome(nome);
+                p.setCodigo(codigoPrograma);
+                p.setUf(uf);
+                p.setAreaConhecimento(ac);
+                pr.save(p);
+                log.info(p.getNome() + " " + p.getUf() + " " + p.getCodigo());
                 
             }
             
@@ -403,7 +523,7 @@ public class Application {
         return (args) -> {
             
             log.info("Sucupira Filter");
-            buscarPorAreaAvaliacao(aar, acr, ir);
+            buscarPorAreaAvaliacao(aar, acr, ir, pr);
             
         };
         
