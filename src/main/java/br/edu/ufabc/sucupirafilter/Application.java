@@ -72,21 +72,22 @@ public class Application {
         
     }
     
-    public static void buscarPorAreaAvaliacao() throws IOException {
+    public static void buscarPorAreaAvaliacao(AreaAvaliacaoRepository aar) throws IOException {
         
         log.info("Buscando as informações da Área de Avaliação e salvando no Banco de Dados.");
         Properties urlProps = getProps("src/main/resources/url.properties");
         Properties regexProps = getProps("src/main/resources/regex.properties");
         
+        String sucupira = urlProps.getProperty("url.sucupira");
         String areaAvaliacao = urlProps.getProperty("url.areaAvaliacao");
-        String areaAvaliacaoCurso = urlProps.getProperty("url.areaAvaliacaoCurso");
+        String codigo = urlProps.getProperty("url.codigo");
         
         try {
             
-            URL url = new URL(areaAvaliacao);
+            URL url = new URL(sucupira + areaAvaliacao);
             String page = getPage(url);
             
-            Matcher matcher;
+            Matcher matcher, matcher2;
             
             Pattern tab1 = Pattern.compile(regexProps.getProperty("regex.tab1"));
             Pattern tab2 = Pattern.compile(regexProps.getProperty("regex.tab2"));
@@ -94,6 +95,13 @@ public class Application {
             Pattern divResultado = Pattern.compile(regexProps.getProperty("regex.areaAvaliacao.divResultado"));
             Pattern table = Pattern.compile(regexProps.getProperty("regex.areaAvaliacao.table"));
             Pattern tbody = Pattern.compile(regexProps.getProperty("regex.areaAvaliacao.tbody"));
+            Pattern tr = Pattern.compile(regexProps.getProperty("regex.areaAvaliacao.tr"));
+            Pattern trReplace = Pattern.compile(regexProps.getProperty("regex.areaAvaliacao.trReplace"));
+            Pattern td = Pattern.compile(regexProps.getProperty("regex.areaAvaliacao.td"));
+            Pattern tdReplace = Pattern.compile(regexProps.getProperty("regex.areaAvaliacao.tdReplace"));
+            Pattern href = Pattern.compile(regexProps.getProperty("regex.areaAvaliacao.href"));
+            Pattern hrefReplace = Pattern.compile(regexProps.getProperty("regex.areaAvaliacao.hrefReplace"));
+            Pattern aReplace = Pattern.compile(regexProps.getProperty("regex.areaAvaliacao.aReplace"));
             
             matcher = tab1.matcher(page);
             page = matcher.replaceAll("");
@@ -106,15 +114,53 @@ public class Application {
             
             matcher = divResultado.matcher(page);
             matcher.find();
+            page = matcher.group();
             
             matcher = table.matcher(page);
             matcher.find();
+            page = matcher.group();
             
             matcher = tbody.matcher(page);
             matcher.find();
             page = matcher.group();
             
-            log.info(page);
+            matcher = tr.matcher(page);
+            String nome;
+            
+            while (matcher.find()) {
+                
+                page = matcher.group();
+                
+                matcher2 = trReplace.matcher(page);
+                page = matcher2.replaceAll("");
+                
+                matcher2 = td.matcher(page);
+                matcher2.find();
+                page = matcher2.group();
+                
+                matcher2 = tdReplace.matcher(page);
+                page = matcher2.replaceAll("");
+                String a = page;
+                
+                matcher2 = href.matcher(page);
+                matcher2.find();
+                page = matcher2.group();
+                
+                matcher2 = hrefReplace.matcher(page);
+                page = matcher2.replaceAll("");
+                
+                if (page.split("areaAvaliacao=")[1].equals(codigo)) {
+                    matcher2 = aReplace.matcher(a);
+                    nome = matcher2.replaceAll("");
+                    AreaAvaliacao aa = new AreaAvaliacao();
+                    aa.setCodigo(codigo);
+                    aa.setNome(nome);
+                    log.info(aa.getCodigo() + " " + aa.getNome());
+                    aar.save(aa);
+                    break;
+                }
+                
+            }
             
         } catch (MalformedURLException mue) {
             
@@ -135,7 +181,7 @@ public class Application {
         return (args) -> {
             
             log.info("Sucupira Filter");
-            buscarPorAreaAvaliacao();
+            buscarPorAreaAvaliacao(aar);
             
         };
         
