@@ -11,8 +11,8 @@ package br.edu.ufabc.sucupirafilter.repository;
  */
 
 import org.springframework.data.repository.CrudRepository;
-import br.edu.ufabc.sucupirafilter.model.AreaAvaliacao;
+import br.edu.ufabc.sucupirafilter.model.Programa;
 
-public interface ProgramaRepository extends CrudRepository<AreaAvaliacao, Long> {
+public interface ProgramaRepository extends CrudRepository<Programa, Long> {
     
 }

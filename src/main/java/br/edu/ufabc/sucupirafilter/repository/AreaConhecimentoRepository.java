@@ -14,5 +14,5 @@ import org.springframework.data.repository.CrudRepository;
 import br.edu.ufabc.sucupirafilter.model.AreaConhecimento;
 
 public interface AreaConhecimentoRepository extends CrudRepository<AreaConhecimento, Long> {
-    
+    AreaConhecimento findByCodigo(String codigo);
 }
