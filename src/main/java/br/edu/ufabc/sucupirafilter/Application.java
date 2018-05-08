@@ -72,7 +72,8 @@ public class Application {
         
     }
     
-    public static void buscarPorAreaAvaliacao(AreaAvaliacaoRepository aar) throws IOException {
+    public static void buscarPorAreaAvaliacao(AreaAvaliacaoRepository aar, AreaConhecimentoRepository acr)
+        throws IOException {
         
         log.info("Buscando as informações da Área de Avaliação e salvando no Banco de Dados.");
         Properties urlProps = getProps("src/main/resources/url.properties");
@@ -149,15 +150,124 @@ public class Application {
                 matcher2 = hrefReplace.matcher(page);
                 page = matcher2.replaceAll("");
                 
-                if (page.split("areaAvaliacao=")[1].equals(codigo)) {
+                if (page.split(regexProps.getProperty("regex.areaAvaliacao.hrefSplit"))[1].equals(codigo)) {
                     matcher2 = aReplace.matcher(a);
                     nome = matcher2.replaceAll("");
                     AreaAvaliacao aa = new AreaAvaliacao();
                     aa.setCodigo(codigo);
                     aa.setNome(nome);
-                    log.info(aa.getCodigo() + " " + aa.getNome());
                     aar.save(aa);
+                    log.info(aa.getCodigo() + " " + aa.getNome());
+                    buscarPorAreaConhecimento(aar, acr);
                     break;
+                }
+                
+            }
+            
+        } catch (MalformedURLException mue) {
+            
+            log.info(mue.getMessage());
+            
+        } catch (Exception e) {
+            
+            log.info(e.getMessage());
+            
+        }
+        
+    }
+    
+    public static void buscarPorAreaConhecimento(AreaAvaliacaoRepository aar, AreaConhecimentoRepository acr)
+        throws IOException {
+        
+        log.info("Buscando as informações da Área de Conhecimento e salvando no Banco de Dados.");
+        Properties urlProps = getProps("src/main/resources/url.properties");
+        Properties regexProps = getProps("src/main/resources/regex.properties");
+        
+        AreaAvaliacao aa = aar.findByCodigo(urlProps.getProperty("url.codigo"));
+        String sucupira = urlProps.getProperty("url.sucupira");
+        String areaConhecimento = urlProps.getProperty("url.areaConhecimento");
+        
+        try {
+            
+            URL url = new URL(sucupira + areaConhecimento + aa.getCodigo());
+            String page = getPage(url);
+            
+            Matcher matcher, matcher2;
+            
+            Pattern tab1 = Pattern.compile(regexProps.getProperty("regex.tab1"));
+            Pattern tab2 = Pattern.compile(regexProps.getProperty("regex.tab2"));
+            Pattern newline = Pattern.compile(regexProps.getProperty("regex.newline"));
+            Pattern divResultado = Pattern.compile(regexProps.getProperty("regex.areaConhecimento.divResultado"));
+            Pattern table = Pattern.compile(regexProps.getProperty("regex.areaConhecimento.table"));
+            Pattern tbody = Pattern.compile(regexProps.getProperty("regex.areaConhecimento.tbody"));
+            Pattern tr = Pattern.compile(regexProps.getProperty("regex.areaConhecimento.tr"));
+            Pattern trReplace = Pattern.compile(regexProps.getProperty("regex.areaConhecimento.trReplace"));
+            Pattern td = Pattern.compile(regexProps.getProperty("regex.areaConhecimento.td"));
+            Pattern tdReplace = Pattern.compile(regexProps.getProperty("regex.areaConhecimento.tdReplace"));
+            Pattern href = Pattern.compile(regexProps.getProperty("regex.areaConhecimento.href"));
+            Pattern hrefReplace = Pattern.compile(regexProps.getProperty("regex.areaConhecimento.hrefReplace"));
+            Pattern aReplace = Pattern.compile(regexProps.getProperty("regex.areaConhecimento.aReplace"));
+            
+            matcher = tab1.matcher(page);
+            page = matcher.replaceAll("");
+            
+            matcher = tab2.matcher(page);
+            page = matcher.replaceAll("<");
+            
+            matcher = newline.matcher(page);
+            page = matcher.replaceAll("");
+            
+            matcher = divResultado.matcher(page);
+            matcher.find();
+            page = matcher.group();
+            
+            matcher = table.matcher(page);
+            matcher.find();
+            page = matcher.group();
+            
+            matcher = tbody.matcher(page);
+            matcher.find();
+            page = matcher.group();
+            
+            matcher = tr.matcher(page);
+            String nome, codigo;
+            
+            while (matcher.find()) {
+                
+                page = matcher.group();
+                
+                matcher2 = trReplace.matcher(page);
+                page = matcher2.replaceAll("");
+                
+                matcher2 = td.matcher(page);
+                
+                if (matcher2.find()) {
+                    
+                    page = matcher2.group();
+
+                    matcher2 = tdReplace.matcher(page);
+                    page = matcher2.replaceAll("");
+                    String a = page;
+
+                    matcher2 = href.matcher(page);
+                    matcher2.find();
+                    page = matcher2.group();
+
+                    matcher2 = hrefReplace.matcher(page);
+                    page = matcher2.replaceAll("");
+                    codigo = page.split(regexProps.getProperty("regex.areaConhecimento.hrefSplit"))[1];
+                    
+                    matcher2 = aReplace.matcher(a);
+                    nome = matcher2.replaceAll("");
+                    
+                    AreaConhecimento ac = new AreaConhecimento();
+                    ac.setNome(nome);
+                    ac.setCodigo(codigo);
+                    ac.setAreaAvaliacao(aa);
+                    acr.save(ac);
+                    
+                    log.info(ac.getCodigo() + " " + ac.getNome());
+                
                 }
                 
             }
@@ -181,7 +291,7 @@ public class Application {
         return (args) -> {
             
             log.info("Sucupira Filter");
-            buscarPorAreaAvaliacao(aar);
+            buscarPorAreaAvaliacao(aar, acr);
             
         };
         
