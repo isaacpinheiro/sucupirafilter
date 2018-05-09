@@ -500,6 +500,7 @@ public class Application {
                 p.setCodigo(codigoPrograma);
                 p.setUf(uf);
                 p.setAreaConhecimento(ac);
+                p.setInstituicao(i);
                 pr.save(p);
                 log.info(p.getNome() + " " + p.getUf() + " " + p.getCodigo());
                 buscarPorCurso(p.getCodigo(), ir, pr, cr);
@@ -521,7 +522,176 @@ public class Application {
     public static void buscarPorCurso(String codigo, InstituicaoRepository ir,
         ProgramaRepository pr, CursoRepository cr) throws IOException {
         
-        // TODO
+        log.info("Buscando as informações dos Cursos e salvando no Banco de Dados.");
+        Properties urlProps = getProps("src/main/resources/url.properties");
+        Properties regexProps = getProps("src/main/resources/regex.properties");
+        
+        Programa p = pr.findByCodigo(codigo);
+        String sucupira = urlProps.getProperty("url.sucupira");
+        String curso = urlProps.getProperty("url.curso");
+        
+        try {
+            
+            URL url = new URL(sucupira + curso + p.getCodigo());
+            String page = getPage(url);
+            
+            Matcher matcher;
+            
+            Pattern tab1 = Pattern.compile(regexProps.getProperty("regex.tab1"));
+            Pattern tab2 = Pattern.compile(regexProps.getProperty("regex.tab2"));
+            Pattern newline = Pattern.compile(regexProps.getProperty("regex.newline"));
+            Pattern spanReplace = Pattern.compile(regexProps.getProperty("regex.curso.spanReplace"));
+            Pattern spanNome = Pattern.compile(regexProps.getProperty("regex.curso.spanNome"));
+            Pattern spanSituacao = Pattern.compile(regexProps.getProperty("regex.curso.spanSituacao"));
+            Pattern spanNivel = Pattern.compile(regexProps.getProperty("regex.curso.spanNivel"));
+            Pattern dataRec = Pattern.compile(regexProps.getProperty("regex.curso.dataRec"));
+            Pattern dataRecReplace = Pattern.compile(regexProps.getProperty("regex.curso.dataRecReplace"));
+            Pattern dataIni = Pattern.compile(regexProps.getProperty("regex.curso.dataIni"));
+            Pattern dataIniReplace = Pattern.compile(regexProps.getProperty("regex.curso.dataIniReplace"));
+            Pattern notaCurso = Pattern.compile(regexProps.getProperty("regex.curso.notaCurso"));
+            Pattern notaCursoReplace = Pattern.compile(regexProps.getProperty("regex.curso.notaCursoReplace"));
+            Pattern cepSpan = Pattern.compile(regexProps.getProperty("regex.curso.cep"));
+            Pattern logradouroSpan = Pattern.compile(regexProps.getProperty("regex.curso.logradouro"));
+            Pattern numeroSpan = Pattern.compile(regexProps.getProperty("regex.curso.numero"));
+            Pattern cidadeSpan = Pattern.compile(regexProps.getProperty("regex.curso.cidade"));
+            Pattern urlSpan = Pattern.compile(regexProps.getProperty("regex.curso.url"));
+            Pattern latSpan = Pattern.compile(regexProps.getProperty("regex.curso.latitude"));
+            Pattern longSpan = Pattern.compile(regexProps.getProperty("regex.curso.longitude"));
+            
+            matcher = tab1.matcher(page);
+            page = matcher.replaceAll("");
+            
+            matcher = tab2.matcher(page);
+            page = matcher.replaceAll("<");
+            
+            matcher = newline.matcher(page);
+            page = matcher.replaceAll("");
+            
+            matcher = spanNome.matcher(page);
+            matcher.find();
+            String nome = matcher.group();
+            
+            matcher = spanReplace.matcher(nome);
+            nome = matcher.replaceAll("");
+            
+            matcher = spanSituacao.matcher(page);
+            matcher.find();
+            String situacao = matcher.group();
+            
+            matcher = spanReplace.matcher(situacao);
+            situacao = matcher.replaceAll("");
+            
+            matcher = spanNivel.matcher(page);
+            matcher.find();
+            String nivel = matcher.group();
+            
+            matcher = spanReplace.matcher(nivel);
+            nivel = matcher.replaceAll("");
+            
+            matcher = dataRec.matcher(page);
+            matcher.find();
+            String dRec = matcher.group();
+            
+            matcher = dataRecReplace.matcher(dRec);
+            dRec = matcher.replaceAll("");
+            
+            matcher = dataIni.matcher(page);
+            matcher.find();
+            String dIni = matcher.group();
+            
+            matcher = dataIniReplace.matcher(dIni);
+            dIni = matcher.replaceAll("");
+            
+            matcher = notaCurso.matcher(page);
+            matcher.find();
+            String nCurso = matcher.group();
+            
+            matcher = notaCursoReplace.matcher(nCurso);
+            nCurso = matcher.replaceAll("");
+            
+            Curso c = new Curso();
+            c.setNome(nome);
+            c.setSituacao(situacao);
+            c.setNivel(nivel);
+            c.setDataRecomendacao(dRec);
+            c.setDataInicio(dIni);
+            c.setNotaCurso(nCurso);
+            c.setPrograma(p);
+            cr.save(c);
+            
+            if (p.getInstituicao().getEndereco() == null) {
+                
+                matcher = cepSpan.matcher(page);
+                matcher.find();
+                String cep = matcher.group();
+
+                matcher = spanReplace.matcher(cep);
+                cep = matcher.replaceAll("");
+                
+                matcher = logradouroSpan.matcher(page);
+                matcher.find();
+                String logradouro = matcher.group();
+
+                matcher = spanReplace.matcher(logradouro);
+                logradouro = matcher.replaceAll("");
+                
+                matcher = numeroSpan.matcher(page);
+                matcher.find();
+                String numero = matcher.group();
+
+                matcher = spanReplace.matcher(numero);
+                numero = matcher.replaceAll("");
+                
+                matcher = cidadeSpan.matcher(page);
+                matcher.find();
+                String cidade = matcher.group();
+
+                matcher = spanReplace.matcher(cidade);
+                cidade = matcher.replaceAll("");
+                
+                matcher = urlSpan.matcher(page);
+                matcher.find();
+                String url_i = matcher.group();
+
+                matcher = spanReplace.matcher(url_i);
+                url_i = matcher.replaceAll("");
+                
+                matcher = latSpan.matcher(page);
+                matcher.find();
+                String lat = matcher.group();
+
+                matcher = spanReplace.matcher(lat);
+                lat = matcher.replaceAll("");
+                
+                matcher = longSpan.matcher(page);
+                matcher.find();
+                String longi = matcher.group();
+
+                matcher = spanReplace.matcher(longi);
+                longi = matcher.replaceAll("");
+                
+                p.getInstituicao().setCep(cep);
+                p.getInstituicao().setEndereco(logradouro + " " + numero);
+                String[] aux = cidade.split(" - ");
+                p.getInstituicao().setCidade(aux[0]);
+                p.getInstituicao().setEstado(aux[1]);
+                p.getInstituicao().setUrl(url_i);
+                p.getInstituicao().setCoordenadas(lat + " " + longi);
+                ir.save(p.getInstituicao());
+                
+            }
+            
+            log.info(c.getNome() + " " + c.getSituacao());
+            
+        } catch (MalformedURLException mue) {
+            
+            log.info(mue.getMessage());
+            
+        } catch (Exception e) {
+            
+            log.info(e.getMessage());
+            
+        }
         
     }
     
