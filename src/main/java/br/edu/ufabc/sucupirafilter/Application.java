@@ -10,7 +10,8 @@ package br.edu.ufabc.sucupirafilter;
  * @author isaac
  */
 
-
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Properties;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -535,7 +536,7 @@ public class Application {
             URL url = new URL(sucupira + curso + p.getCodigo());
             String page = getPage(url);
             
-            Matcher matcher;
+            Matcher matcher, matcher2;
             
             Pattern tab1 = Pattern.compile(regexProps.getProperty("regex.tab1"));
             Pattern tab2 = Pattern.compile(regexProps.getProperty("regex.tab2"));
@@ -567,57 +568,68 @@ public class Application {
             matcher = newline.matcher(page);
             page = matcher.replaceAll("");
             
-            matcher = spanNome.matcher(page);
-            matcher.find();
-            String nome = matcher.group();
+            List<Curso> cursos = new ArrayList<Curso>();
             
-            matcher = spanReplace.matcher(nome);
-            nome = matcher.replaceAll("");
+            matcher = spanNome.matcher(page);
+            
+            while (matcher.find()) {
+                String nome = matcher.group();
+                matcher2 = spanReplace.matcher(nome);
+                nome = matcher2.replaceAll("");
+                Curso c = new Curso();
+                c.setNome(nome);
+                cursos.add(c);
+            }
             
             matcher = spanSituacao.matcher(page);
-            matcher.find();
-            String situacao = matcher.group();
             
-            matcher = spanReplace.matcher(situacao);
-            situacao = matcher.replaceAll("");
+            for (Curso c : cursos) {
+                matcher.find();
+                String situacao = matcher.group();
+                matcher2 = spanReplace.matcher(situacao);
+                situacao = matcher2.replaceAll("");
+                c.setSituacao(situacao);
+            }
             
             matcher = spanNivel.matcher(page);
-            matcher.find();
-            String nivel = matcher.group();
             
-            matcher = spanReplace.matcher(nivel);
-            nivel = matcher.replaceAll("");
+            for (Curso c : cursos) {
+                matcher.find();
+                String nivel = matcher.group();
+                matcher2 = spanReplace.matcher(nivel);
+                nivel = matcher2.replaceAll("");
+                c.setNivel(nivel);
+            }
             
             matcher = dataRec.matcher(page);
-            matcher.find();
-            String dRec = matcher.group();
             
-            matcher = dataRecReplace.matcher(dRec);
-            dRec = matcher.replaceAll("");
+            for (Curso c : cursos) {
+                matcher.find();
+                String dRec = matcher.group();
+                matcher2 = dataRecReplace.matcher(dRec);
+                dRec = matcher2.replaceAll("");
+                c.setDataRecomendacao(dRec);
+            }
             
             matcher = dataIni.matcher(page);
-            matcher.find();
-            String dIni = matcher.group();
             
-            matcher = dataIniReplace.matcher(dIni);
-            dIni = matcher.replaceAll("");
+            for (Curso c : cursos) {
+                matcher.find();
+                String dIni = matcher.group();
+                matcher2 = dataIniReplace.matcher(dIni);
+                dIni = matcher2.replaceAll("");
+                c.setDataInicio(dIni);
+            }
             
             matcher = notaCurso.matcher(page);
-            matcher.find();
-            String nCurso = matcher.group();
             
-            matcher = notaCursoReplace.matcher(nCurso);
-            nCurso = matcher.replaceAll("");
-            
-            Curso c = new Curso();
-            c.setNome(nome);
-            c.setSituacao(situacao);
-            c.setNivel(nivel);
-            c.setDataRecomendacao(dRec);
-            c.setDataInicio(dIni);
-            c.setNotaCurso(nCurso);
-            c.setPrograma(p);
-            cr.save(c);
+            for (Curso c : cursos) {
+                matcher.find();
+                String nCurso = matcher.group();
+                matcher2 = notaCursoReplace.matcher(nCurso);
+                nCurso = matcher2.replaceAll("");
+                c.setNotaCurso(nCurso);
+            }
             
             if (p.getInstituicao().getEndereco() == null) {
                 
@@ -681,7 +693,11 @@ public class Application {
                 
             }
             
-            log.info(c.getNome() + " " + c.getSituacao());
+            for (Curso c : cursos) {
+                c.setPrograma(p);
+                cr.save(c);
+                log.info(c.getNome() + " " + c.getSituacao());
+            }
             
         } catch (MalformedURLException mue) {
             
